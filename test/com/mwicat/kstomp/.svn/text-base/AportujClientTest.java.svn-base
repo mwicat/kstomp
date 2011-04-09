@@ -1,0 +1,110 @@
+/*
+ * SerializableOutputStreamTest.java
+ *  
+ * Copyright 2008 C.A. Meijer
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package pl.aportuj;
+
+import jmunit.framework.cldc11.TestCase;
+import pl.aportuj.aportujmx.comm.AuthException;
+import pl.aportuj.aportujmx.comm.ConnectionException;
+import pl.aportuj.aportujmx.comm.ConnectionState;
+import pl.aportuj.aportujmx.comm.LoginContext;
+import pl.aportuj.aportujmx.comm.ObjectMonitor;
+import pl.aportuj.aportujmx.comm.Protocol;
+
+import com.hammingweight.hammock.Hammock;
+import com.hammingweight.objectstreams.mocks.MockChannel;
+
+public class AportujClientTest extends TestCase {
+
+	private Hammock hammock;
+	private MockChannel mockChannel;
+	private LoginContext loginCtx;
+
+	public void setUp() {
+		loginCtx = new LoginContext("marek", "pass");
+		this.hammock = new Hammock();
+		try {
+			this.mockChannel = new MockChannel(null, null, this.hammock);
+		} catch (ConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void tearDown() {
+
+	}
+
+	// If we're marshalling a marshaller we should ask the MarshallerRegistry
+	// for a marshaller if the MarshallerRegistry associates a class name
+	// with the serialized name.
+	public void testAuthError() throws Throwable {
+		this.hammock.setExpectation(MockChannel.MTHD_SEND_LINE_$_STRING,
+				new Object[] { "AUTH marek pass" });
+		this.hammock.setExpectation(MockChannel.MTHD_READ_LINE).setReturnValue("AUTH ERR");
+		
+		
+		ConnectionState state = new ConnectionState();
+		ObjectMonitor mon = new ObjectMonitor();
+		Protocol cl = new Protocol(state, mockChannel, mon);
+		try {
+			cl.login(loginCtx);
+			fail();
+		} catch (AuthException e) {
+
+		}
+		this.hammock.verify();
+	}
+
+	public void testAuthOk() throws Throwable {
+		this.hammock.setExpectation(MockChannel.MTHD_SEND_LINE_$_STRING,
+				new Object[] { "AUTH marek pass" });
+		this.hammock.setExpectation(MockChannel.MTHD_READ_LINE).setReturnValue("AUTH OK");
+		
+		
+		ConnectionState state = new ConnectionState();
+		ObjectMonitor mon = new ObjectMonitor();
+		Protocol cl = new Protocol(state, mockChannel, mon);
+		try {
+			cl.login(loginCtx);
+		} catch (AuthException e) {
+			fail();
+		}
+		this.hammock.verify();
+	}
+
+	public AportujClientTest() {
+		super(2, "SerializableOutputStreamTest");
+	}
+
+	public void test(int testNum) throws Throwable {
+		switch (testNum) {
+
+		case 0:
+			testAuthError();
+			break;
+		case 1:
+			testAuthOk();
+			break;
+
+		default:
+			fail("No such test.");
+		}
+	}
+
+}

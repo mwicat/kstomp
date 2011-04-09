@@ -1,0 +1,53 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package pl.aportuj.aportujmx.comm;
+
+import com.mwicat.mobile.util.Util;
+import com.nutiteq.utils.Utils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+
+/**
+ * 
+ * @author mwicat
+ */
+public class Channel {
+
+	private Reader reader;
+	private Writer writer;
+
+	public Channel(Reader reader, Writer writer) throws ConnectionException {
+		this.reader = reader;
+		this.writer = writer;
+	}
+
+	public String readLine() throws ConnectionException {
+		String msg = Util.readLine(reader);
+		if (msg == null) {
+			throw new ConnectionException("readLine exception");
+		}
+		return msg;
+	}
+
+	public static String formatMessage(String msg) {
+		msg += "\n";
+		return msg;
+	}
+
+	public void sendLine(String msg) throws ConnectionException {
+		try {
+			// #debug info
+			System.out.println("SEND: " + msg);
+			writer.write(formatMessage(msg));
+			writer.flush();
+		} catch (IOException ex) {
+			throw new ConnectionException(ex.getMessage());
+		}
+	}
+
+}

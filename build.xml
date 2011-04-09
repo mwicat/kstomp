@@ -23,7 +23,7 @@
 		<property name="dir.dist" value="dist/${customization}" />
 		<property name="deploy-url" value="" />
 		<property name="vendor.dir" value="vendor" />
-		<property name="binary.libs" value="../mobimisc/dist" />
+		<property name="binary.libs" value="../mxutil/dist" />
 
 	  	<property name="src.dir" value="src" />
 		<property name="lib.dir" value="${wtk.home}/lib" />

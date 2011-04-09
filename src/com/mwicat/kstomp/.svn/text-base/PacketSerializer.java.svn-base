@@ -1,0 +1,113 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package pl.aportuj.aportujmx.comm.in;
+
+import com.nutiteq.components.WgsPoint;
+import com.nutiteq.utils.Utils;
+import java.util.Hashtable;
+import java.util.Vector;
+
+/**
+ *
+ * @author mwicat
+ */
+public class PacketSerializer {
+
+    public static Packet decode(String data) throws DecoderError {
+        if (data.equals("")) {
+            throw new DecoderError("Empty data");
+        }
+        String[] fields = Utils.split(data, " ");
+        String[] params = getParams(fields);
+        String type = fields[0];
+        return parsePacket(type, params);
+    }
+
+    public static String encode(Packet pckt) {
+        String str = null;
+        if (pckt.getType().equals("AUTH")) {
+            str = encodeLogin((String)pckt.getAttribute("username"), (String)pckt.getAttribute("password"));
+        } else {
+            
+        }
+        return str;
+    }
+
+    private static String encodeLogin(String username, String password) {
+        return "AUTH " + username + " " + password;
+    }
+
+    private static String[] getParams(String[] fields) {
+        String[] params = new String[fields.length - 1];
+        for(int i = 0; i < params.length; i++) {
+            params[i] = fields[i+1];
+        }
+        return params;
+    }
+
+    private static WgsPoint parsePosition(String latStr, String lonStr) {
+        double lat = Double.parseDouble(latStr);
+        double lon = Double.parseDouble(lonStr);
+        WgsPoint p = new WgsPoint(lon, lat);
+        return p;
+    }
+
+
+    private static Hashtable parseDataAttrs(String[] params) {
+        Integer id = Integer.valueOf(params[0]);
+        WgsPoint position = parsePosition(params[1], params[2]);
+        Integer battery = Integer.valueOf(params[3]);
+        return Packet.createAttrs(
+                new Object[] {"id", id, "position", position, "battery", battery}
+        );
+    }
+
+    private static Hashtable parseAuthAttrs(String[] params) {
+        boolean authenticated = params[0].equals("OK");
+        return Packet.createAttrs(
+                new Object[] {"authenticated", authenticated ? Boolean.TRUE : Boolean.FALSE}
+        );
+    }
+
+    private static Hashtable parseObject(String[] params) {
+        Integer id = Integer.valueOf(params[0]);
+        String name = params[1];
+        name = name.replace('_', ' ');
+        WgsPoint position = parsePosition(params[2], params[3]);
+        Integer battery = Integer.valueOf(params[4]);
+        return Packet.createAttrs(
+                new Object[] {"id", id, "name", name, "position", position, "battery", battery}
+        );
+    }
+
+    private static Hashtable parseObjects(String[] params) {
+        final int n = params.length;
+        Vector objects = new Vector(n);
+        for (int i = 0; i < n; i++) {
+            String[] ps = Utils.split(params[i], ",");
+            objects.addElement(parseObject(ps));
+        }
+        return Packet.createAttrs(new Object[] {
+            "objects", objects
+        });
+    }
+
+
+    private static Packet parsePacket(String type, String[] params) throws DecoderError {
+        Hashtable attrs = null;
+        if (type.equals("AUTH")) {
+            attrs = parseAuthAttrs(params);
+        } else if (type.equals("PONG")) {
+            attrs = null;
+        } else if (type.equals("OBJECTS")) {
+            attrs = parseObjects(params);
+        } else if (type.equals("DATA")) {
+            attrs = parseDataAttrs(params);
+        } else {
+            throw new DecoderError("Unknown response type " + type);
+        }
+        return new Packet(type, attrs);
+    }
+}

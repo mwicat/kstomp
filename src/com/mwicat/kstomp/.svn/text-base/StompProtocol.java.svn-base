@@ -1,0 +1,73 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package pl.aportuj.aportujmx.comm;
+
+import de.enough.polish.event.EventManager;
+import java.util.Hashtable;
+import pl.aportuj.aportujmx.comm.in.DecoderError;
+import pl.aportuj.aportujmx.comm.in.Packet;
+import pl.aportuj.aportujmx.comm.in.PacketSerializer;
+
+/**
+ * 
+ * @author mwicat
+ */
+public class Protocol {
+
+	private ObjectMonitor objMonitor;
+	private Channel channel;
+	private boolean listening = false;
+	private ConnectionState state;
+
+	public Protocol(ConnectionState state, Channel channel, ObjectMonitor objMonitor) {
+		this.channel = channel;
+		this.state = state;
+		this.objMonitor = objMonitor;
+	}
+
+	private void startListening() throws ClientException {
+		state.setState(ConnectionState.STATE_LISTENING);
+		listening = true;
+		while (listening) {
+			objMonitor.process(read());
+		}
+	}
+	
+	public void stopListening() {
+		listening = false;
+	}
+
+	private void send(Packet pckt) throws ConnectionException {
+		channel.sendLine(PacketSerializer.encode(pckt));
+	}
+
+	private Packet read() throws DecoderError, ConnectionException {
+		return PacketSerializer.decode(channel.readLine());
+	}
+
+	public void listen(LoginContext loginCtx) throws ClientException {
+		login(loginCtx);
+		startListening();
+	}
+
+	public void login(LoginContext loginCtx) throws AuthException,
+			ClientException {
+		Hashtable attrs = Packet.createAttrs(new Object[] { "username",
+				loginCtx.getUsername(), "password", loginCtx.getPassword() });
+		Packet loginPacket = new Packet("AUTH", attrs);
+
+		state.setState(ConnectionState.STATE_AUTHENTICATING);
+		send(loginPacket);
+		Packet resp = read();
+		Boolean authed = (Boolean) resp.getAttribute("authenticated");
+		if (!authed.booleanValue()) {
+			// #debug info
+			System.out.println("throw AuthException");
+			throw new AuthException("Bad user/password");
+		}
+		state.setState(ConnectionState.STATE_AUTHENTICATED);
+	}
+
+}

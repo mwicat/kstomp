@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="res"/>
+	<classpathentry kind="src" path="scripts"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/j2mepolish"/>
+	<classpathentry kind="lib" path="/mobimisc/dist/Generic-Microemu-java5.jar"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="lib" path="lib/antenna-bin-1.2.1-beta.jar"/>
+	<classpathentry kind="lib" path="lib/hammock10.jar"/>
+	<classpathentry kind="lib" path="lib/hammock20_11.jar"/>
+	<classpathentry kind="lib" path="lib/hammockmaker.jar"/>
+	<classpathentry kind="lib" path="lib/jdom.jar"/>
+	<classpathentry kind="lib" path="lib/jmunit_anttasks-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/jmunit4cldc11-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/microemulator.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/mobimisc"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

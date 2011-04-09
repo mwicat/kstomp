@@ -1,0 +1,50 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+package pl.aportuj.aportujmx.comm.in;
+
+import java.util.Hashtable;
+
+/**
+ *
+ * @author mwicat
+ */
+public class Packet {
+
+    private Hashtable attributes;
+    private String type;
+
+    public Packet(String type, Hashtable attributes) {
+        this.type = type;
+        this.attributes = attributes;
+    }
+
+    public Hashtable getAttributes() {
+        return attributes;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Object getAttribute(String name) {
+        return attributes.get(name);
+    }
+
+    public int getSize() {
+        return attributes.size();
+    }
+
+    public static Hashtable createAttrs(Object[] objs) {
+        int n = objs.length / 2;
+        Hashtable ht = new Hashtable(n);
+        for (int i = 0; i < objs.length; i+=2) {
+            ht.put(objs[i], objs[i+1]);
+        }
+        return ht;
+    }
+
+
+}
