@@ -1,5 +1,5 @@
-MIDlet-Jar-URL: mobistomp.jar
-MIDlet-Name: mobistomp MIDlet Suite
+MIDlet-Jar-URL: kstomp.jar
+MIDlet-Name: kstomp MIDlet Suite
 MIDlet-Vendor: MIDlet Suite Vendor
 MIDlet-Version: 1.0.0
 MicroEdition-Configuration: CLDC-1.0

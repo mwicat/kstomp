@@ -16,7 +16,7 @@
 	<property name="devices" value="${device},Generic/AnyMsaPhone,Nokia/Series40E3,Nokia/Series60E3,Sony-Ericsson/JavaPlatform7,Sony-Ericsson/JavaPlatform8"/>
 	
 	<target name="init">
-		<property name="jar.name" value="mobistomp.jar" />
+		<property name="jar.name" value="kstomp.jar" />
 	  	<property name="test" value="true" />
 	  	<property name="customization" value="" /><!-- use empty value in case none has been set before -->
 		<property name="dir.work" value="build/real/${customization}" />
@@ -75,11 +75,11 @@
 
 	<target name="buildmocks" depends="taskdefs">
 		<echo message="${sut.jar}"></echo>
-		<hammockmaker usecldc11="true" dir="${test.mocks.dir}" package="com.mwicat.mobistomp.mocks" failonerror="true">
+		<hammockmaker usecldc11="true" dir="${test.mocks.dir}" package="com.mwicat.kstomp.mocks" failonerror="true">
 			<classpath>
 				<pathelement path="${sut.jar}" />
 			</classpath>
-			<mock class="com.mwicat.mobistomp.Channel" />
+			<mock class="com.mwicat.kstomp.Channel" />
 		</hammockmaker>
 	</target>
 
@@ -99,7 +99,7 @@
 	<!-- Package the tests. -->
 	<target name="packagetests" depends="compiletests">
 		<wtkjad jadfile="${test.dist.dir}/ostests.jad" jarfile="${test.dist.dir}/ostests.jar" name="ostests" vendor="hammingweight.com" version="1.0.0">
-			<midlet name="TestRunner" class="com.mwicat.mobistomp.TestRunner" />
+			<midlet name="TestRunner" class="com.mwicat.kstomp.TestRunner" />
 		</wtkjad>
 		<wtkpackage jarfile="${test.dist.dir}/ostests.jar" jadfile="${test.dist.dir}/ostests.jad" preverify="false" obfuscate="false">
 			<libclasspath>
@@ -118,7 +118,7 @@
 			<classpath>
 				<path path="${test.dist.dir}/ostests.jar" />
 			</classpath>
-			<test name="com.mwicat.mobistomp.AllTests" todir="${reports.dir}" />
+			<test name="com.mwicat.kstomp.AllTests" todir="${reports.dir}" />
 		</jmunit>
 	</target>
 

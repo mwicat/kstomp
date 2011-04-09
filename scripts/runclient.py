@@ -3,7 +3,7 @@ from org.microemu.device.j2se import J2SEDevice;
 dev = J2SEDevice()
 DeviceFactory.setDevice(dev)
 
-from com.mwicat.mobistomp import *
+from com.mwicat.kstomp import *
 
 
 class MyHandler(MessageHandler):
