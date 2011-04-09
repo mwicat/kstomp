@@ -1,0 +1,255 @@
+<project 
+	name="kstomp" 
+	default="j2mepolish">
+	
+	<property environment="env" />
+	
+	<property name="polish.home" value="${env.POLISH_HOME}" />
+	<property file="${polish.home}/global.properties" />
+
+	<taskdef name="j2mepolish" 
+		classname="de.enough.polish.ant.PolishTask" 
+		classpath="${polish.home}/lib/enough-j2mepolish-build.jar"
+	/>
+	
+	<property name="device" value="Generic/Java"/>
+	<property name="devices" value="${device},Generic/AnyMsaPhone,Nokia/Series40E3,Nokia/Series60E3,Sony-Ericsson/JavaPlatform7,Sony-Ericsson/JavaPlatform8"/>
+	
+	<target name="init">
+		<property name="jar.name" value="mobistomp.jar" />
+	  	<property name="test" value="true" />
+	  	<property name="customization" value="" /><!-- use empty value in case none has been set before -->
+		<property name="dir.work" value="build/real/${customization}" />
+		<property name="dir.dist" value="dist/${customization}" />
+		<property name="deploy-url" value="" />
+		<property name="vendor.dir" value="vendor" />
+		<property name="binary.libs" value="../mobimisc/dist" />
+
+	  	<property name="src.dir" value="src" />
+		<property name="lib.dir" value="${wtk.home}/lib" />
+		
+		<property name="sut.dir" location="build/Generic/Java/en/classes" />
+		<property name="sut.jar" location="dist/${jar.name}" />
+		<property name="test.dir" value="test" />
+		<property name="test.mocks.dir" value="test_mocks" />
+		<property name="test.build.dir" value="classes_test" />
+		<property name="test.dist.dir" value="dist_tests" />
+		<property name="dist.dir" value="dist" />
+		<property name="docs.dir" value="docs" />
+		<property name="reports.dir" location="reports" />
+
+		<property name="wtk.cldc.version" value="1.1" />
+		<property name="wtk.midp.version" value="2.0" />
+		<property name="wtk.all.enabled" value="true" />
+
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${test.build.dir}" />
+		<mkdir dir="${test.dist.dir}" />
+
+		<path id="midp.classpath">
+			<pathelement path="${lib.dir}/midpapi20.jar" />
+			<pathelement path="${lib.dir}/cldcapi11.jar" />
+		</path>
+
+		<path id="antenna.classpath">
+			<pathelement path="lib/antenna-bin-1.2.1-beta.jar" />
+		</path>
+
+		<path id="testlib.classpath">
+			<pathelement path="lib/jmunit4cldc11-1.2.1.jar" />
+			<pathelement path="lib/hammock20_11.jar" />
+		</path>
+
+		
+	</target>
+	
+	<!-- We need to add Ant tasks for HammockMaker and Antenna. -->
+	<target name="taskdefs" depends="init">
+		<taskdef name="hammockmaker" classname="com.hammingweight.hammockmaker.HammockMaker" classpath="lib/hammockmaker.jar" />
+		<taskdef name="testlistener" classname="jmunit.anttask.TestListener" classpath="lib/jmunit_anttasks-1.2.1.jar" />
+		<taskdef name="wtkjad" classname="de.pleumann.antenna.WtkJad" classpathref="antenna.classpath" />
+		<taskdef name="wtkpackage" classname="de.pleumann.antenna.WtkPackage" classpathref="antenna.classpath" />
+		<taskdef name="wtkrun" classname="de.pleumann.antenna.WtkRun" classpathref="antenna.classpath" />
+		<taskdef name="jmunit" classname="jmunit.anttask.cldc11.Jmunit" classpath="lib/jmunit4cldc11-1.2.1.jar:lib/jmunit_anttasks-1.2.1.jar:lib/microemulator.jar:lib/jdom.jar" />
+	</target>
+
+	<target name="buildmocks" depends="taskdefs">
+		<echo message="${sut.jar}"></echo>
+		<hammockmaker usecldc11="true" dir="${test.mocks.dir}" package="com.mwicat.mobistomp.mocks" failonerror="true">
+			<classpath>
+				<pathelement path="${sut.jar}" />
+			</classpath>
+			<mock class="com.mwicat.mobistomp.Channel" />
+		</hammockmaker>
+	</target>
+
+
+	<!-- Build the tests. -->
+	<target name="compiletests" depends="buildmocks">
+		<javac srcdir="${test.dir}:${test.mocks.dir}" destdir="${test.build.dir}" source="1.2" target="1.1">
+			<bootclasspath refid="midp.classpath" />
+			<classpath>
+				<path refid="testlib.classpath" />
+				<pathelement path="${sut.jar}" />
+			</classpath>
+		</javac>
+	</target>
+
+
+	<!-- Package the tests. -->
+	<target name="packagetests" depends="compiletests">
+		<wtkjad jadfile="${test.dist.dir}/ostests.jad" jarfile="${test.dist.dir}/ostests.jar" name="ostests" vendor="hammingweight.com" version="1.0.0">
+			<midlet name="TestRunner" class="com.mwicat.mobistomp.TestRunner" />
+		</wtkjad>
+		<wtkpackage jarfile="${test.dist.dir}/ostests.jar" jadfile="${test.dist.dir}/ostests.jad" preverify="false" obfuscate="false">
+			<libclasspath>
+				<path refid="testlib.classpath" />
+			</libclasspath>
+			<fileset dir="${sut.dir}" />
+			<fileset dir="${test.build.dir}" />
+		</wtkpackage>
+	</target>
+
+
+	<!-- Run the JMUnit MIDlet. -->
+	<target name="test" depends="packagetests">
+		<jmunit haltonerror="false" haltonfailure="false" failureproperty="testfailure">
+			<formatter type="xml" />
+			<classpath>
+				<path path="${test.dist.dir}/ostests.jar" />
+			</classpath>
+			<test name="com.mwicat.mobistomp.AllTests" todir="${reports.dir}" />
+		</jmunit>
+	</target>
+
+	<target name="report" depends="test">
+		<junitreport todir="${reports.dir}">
+			<fileset dir="${reports.dir}">
+				<include name="TEST-*.xml" />
+			</fileset>
+			<report format="noframes" todir="${reports.dir}" />
+		</junitreport>
+	</target>
+	
+	<target name="j2mepolish" 
+			depends="init"
+			description="This is the controller for the J2ME build process." 
+			>
+		<j2mepolish>
+				    <!-- general settings -->
+					<info copyright="Copyright 2010 Enough Software. All rights reserved." 
+						description="A demonstration of the Java 5 Syntax Support Framework." 
+						infoUrl="http://www.enough.de" 
+						jarName="${jar.name}" 
+						jarUrl="${deploy-url}${polish.jarName}" 
+						name="Java5 Sample" 
+						vendorName="Enough Software" 
+						version="1.0.4" 
+				    />
+					<!-- selection of supported devices -->
+					<!-- selection of supported devices -->
+		            <deviceRequirements if="config.active:defined and (test or enableCompilerMode)" >		
+		                <requirement name="Identifier" value="${config.active}" />
+					</deviceRequirements>
+					<deviceRequirements if="device:defined and (test or enableCompilerMode)" unless="config.active:defined">
+						<requirement name="Identifier" value="${device}" />
+					</deviceRequirements>
+					<deviceRequirements unless="test or enableCompilerMode">
+						<requirement name="Identifier" value="${devices}" />
+					</deviceRequirements>
+				    <!-- build settings -->
+					<build fullscreen="menu" 
+			                symbols="polish.usePolishTitle"
+			                usePolishGui="false"
+							preverify="false"
+							binaryLibraries="${binary.libs}"
+						>
+						
+						<variables>
+							<variable name="polish.usePolishTitle" value="true" />
+							<variable name="polish.Emulator.Class" value="com.mwicat.emulator.CustomMicroEmulator" />
+						</variables>
+
+						<postcompiler name="java5" />
+						
+						<debug level="info" verbose="true" logTimestamp="true" if="true">
+						</debug>
+						<resources
+							dir="resources"
+							defaultexcludes="yes"
+							excludes="readme.txt"
+						>
+							<localization locales="en" />
+						</resources>
+					</build>
+					
+					<!-- execution of emulator(s) -->
+					
+					<emulator
+						wait="true"
+						trace="none"
+						securityDomain="manufacturer"
+						enableProfiler="false"
+						enableMemoryMonitor="false"
+						enableNetworkMonitor="false"
+						if="false and test and not debug"
+						>
+						<!--
+						<parameter name="-Xjam" value="transient=http://localhost:8080/${polish.jadName}" />
+						-->
+					</emulator>
+		                        
+					<emulator
+						wait="true"
+						securityDomain="manufacturer"
+						enableProfiler="false"
+						enableMemoryMonitor="false"
+						enableNetworkMonitor="false"
+						if="debug"
+						>
+						<!-- Attach the emulator to the NetBeans debugger:	-->
+						<debugger port="8000" /> 						
+					</emulator>
+					
+		</j2mepolish>
+	</target>
+
+	<target name="enableDebug" 
+		>
+		<property name="debug" value="true" />
+	</target>
+
+    <target name="debug" description="debugs the project" depends="enableDebug, enableEmulator, j2mepolish" />	
+		
+	<target name="enableEmulator" 
+		>
+		<property name="test" value="true" />
+	  	<property name="customization" value="" /><!-- use empty value in case none has been set before -->
+		<property name="dir.work" value="build/test/${customization}" />
+	</target>
+
+	<target 
+		name="emulator"
+		depends="enableEmulator,j2mepolish"
+		description="invokes the emulator"
+	>
+	</target>
+
+	<target name="clean"  depends="clean-test"
+	  		description="allows a clean build. You should call [ant clean] whenever you made changes to devices.xml, vendors.xml or groups.xml">
+		<delete dir="build" />
+		<delete dir="dist" includes="**/*" />
+	</target>
+	
+	<target name="clean-test" depends="init">
+		<delete dir="${dist.dir}" />
+		<delete dir="${docs.dir}/api" />
+		<delete>
+			<fileset dir="${test.mocks.dir}" includes="**/*.java" />
+		</delete>
+		<delete dir="${test.build.dir}" />
+		<delete dir="${test.dist.dir}" />
+	</target>
+	
+</project>
+
